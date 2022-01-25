@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ConfigManager.h"
+
 #include <amqpcpp.h>
 #include <amqpcpp/libboostasio.h>
 
@@ -13,6 +15,7 @@ namespace network {
 static std::unique_ptr<AMQP::TcpChannel> AmqpChannel;
 static std::atomic<bool> AmqpReady;
 static long long lastConnectionTimestamp;
+static TunnelbrokerConfig config;
 
 void AMQPConnect();
 void AMQPConnectInternal();

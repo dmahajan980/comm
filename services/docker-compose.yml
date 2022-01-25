@@ -21,6 +21,8 @@ services:
       - "${COMM_SERVICES_PORT_TUNNELBROKER}:50051"
     volumes:
       - $HOME/.aws/credentials:/root/.aws/credentials:ro
+    env_file:
+      - tunnelbroker/tunnelbroker.env
   # backup
   backup-base:
     build:

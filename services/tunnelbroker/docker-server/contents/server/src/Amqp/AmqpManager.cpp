@@ -9,12 +9,13 @@ namespace comm {
 namespace network {
 
 void AMQPConnectInternal() {
-  std::cout << "AMQP: Connecting to " << AMQP_URI << std::endl;
+  config.loadConfig();
+  std::cout << "AMQP: Connecting to " << config.amqpURI << std::endl;
 
   // Make a connection and channel
   boost::asio::io_service BoostIOservice(AMQP_CLIENT_THREADS);
   AMQP::LibBoostAsioHandler AMQPhandler(BoostIOservice);
-  AMQP::TcpConnection connection(&AMQPhandler, AMQP::Address(AMQP_URI));
+  AMQP::TcpConnection connection(&AMQPhandler, AMQP::Address(config.amqpURI));
   AmqpChannel = std::make_unique<AMQP::TcpChannel>(&connection);
 
   AmqpChannel->onError([&connection](const char *message) {
@@ -27,14 +28,14 @@ void AMQPConnectInternal() {
   AMQP::Table arguments;
   arguments["x-message-ttl"] = AMQP_MESSAGE_TTL;
   arguments["x-expires"] = AMQP_QUEUE_TTL;
-  AmqpChannel->declareQueue(TUNNELBROKER_ID, AMQP::durable, arguments)
+  AmqpChannel->declareQueue(config.tunnelbrokerID, AMQP::durable, arguments)
       .onSuccess([&connection](
                      const std::string &name,
                      uint32_t messagecount,
                      uint32_t consumercount) {
         std::cout << "AMQP: Queue " << name << " created" << std::endl;
         AmqpReady = true;
-        AmqpChannel->consume(TUNNELBROKER_ID)
+        AmqpChannel->consume(config.tunnelbrokerID)
             .onReceived([&](const AMQP::Message &message,
                             uint64_t deliveryTag,
                             bool redelivered) {
@@ -99,7 +100,7 @@ bool AMQPSend(
     // Set delivery mode to durable
     env.setDeliveryMode(2);
     env.setHeaders(std::move(headers));
-    AmqpChannel->publish("", TUNNELBROKER_ID, env);
+    AmqpChannel->publish("", config.tunnelbrokerID, env);
   } catch (std::runtime_error &e) {
     std::cout << "AMQP: Error while publishing message:  " << e.what()
               << std::endl;
